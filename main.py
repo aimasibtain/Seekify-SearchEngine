@@ -10,7 +10,9 @@ from file_retriever import get_json_file_paths
 from file_retriever import load_file
 import check_url
 
-json_files = get_json_file_paths(r'D:\Downloads\test')
+import re
+
+json_files = get_json_file_paths(r'E:\json\test')
 #checks if file have been successfully retrieved
 print(json_files)
 
@@ -38,10 +40,14 @@ class IndexBuilder(threading.Thread):
         with self.lock:
             #finds the position of each word in the section
             for position, token in enumerate(tokens):
+                
+                #remove unwanted characters
+                clean_token = re.sub(r'[\'@!.(){}[\]/,;:"]', '', token)
                 #filters out stopwords
-                if token not in stopwords.words('english'):
+                if clean_token.lower() not in stopwords.words('english'):
+                    
                     #checks to see if word is in our lexicon
-                    if token not in self.words:
+                    if clean_token not in self.words:
                         #if the word is not present, it is assigned an id and added to the lexicon
                         word_id = len(self.words) + 1
                         self.words[token] = word_id
