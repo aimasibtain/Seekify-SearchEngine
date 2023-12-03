@@ -18,4 +18,8 @@ Install all the required dependencies with:
 ```bash
     pip install -r requirements.txt
 ```
+Install dependencies for java from :
+
+https://mvnrepository.com/artifact/com.fasterxml.jackson.core
+
     
