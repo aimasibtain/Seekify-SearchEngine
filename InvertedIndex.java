@@ -50,11 +50,13 @@ public class InvertedIndex {
                 
             //Conversion of map into Json object 
             JSONObject Inverted_Index=new JSONObject(Inverted_index);
-            //creating object of file writer
-            FileWriter index_write = new FileWriter("inverted_index.json");
-            //Writing whole Inverted Index into json file (Inverted_index.json)
-            index_write.write(Inverted_Index.toString());
-            
+
+            try (FileWriter index_write = new FileWriter("inverted_index.json")) {
+                index_write.write(Inverted_Index.toString()); // Specify an indentation value for better readability
+                System.out.println("Data written to file successfully.");
+            } catch (IOException e) {
+                System.out.println("Error writing to file: " + e.getMessage());
+            } 
             }
         } catch (FileNotFoundException e) {
             System.out.println(e.getMessage()+"Unable to open Forward index file");
