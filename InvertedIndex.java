@@ -1,3 +1,4 @@
+
 package com.mycompany.invertedindex;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -5,9 +6,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import org.json.JSONObject;
 
 public class InvertedIndex {
@@ -33,17 +32,26 @@ public class InvertedIndex {
 
                 // Accessing the data from the JSON object (DOcument ids)
                 JSONObject documents = json_file.getJSONObject("documents");
-                Map<String,Set<Integer>> Inverted_index =new HashMap<>();
+                Map<String,Map<String,Integer>> Inverted_index =new HashMap<>();
                 // Iterate through document IDs
                 for (String documentId : documents.keySet()) {                    
                     JSONObject words = documents.getJSONObject(documentId).getJSONObject("words");
+                    System.out.println("DOcument id: "+documentId);
                     // Iterate through word IDs
+                
                     for (String wordId : words.keySet()) {
                         if (Inverted_index == null) {
                             System.out.println("inverted_index is null");
                         } else {
                          //computeIfAbsent with null check--> so that map must have value for each wordId
-                             Inverted_index.computeIfAbsent(wordId, k -> new HashSet<>()).add(Integer.valueOf(documentId));
+                         
+                        // Get the frequency of the word in the current document// Assuming Inverted_index is declared as Map<String, Map<String, Integer>>
+                    int frequency = words.getJSONObject(wordId).getInt("frequency");
+
+                    Inverted_index.computeIfAbsent(wordId, k -> new HashMap<>()).put(documentId, frequency);
+
+//                    For inverted index without frequency:
+//                             Inverted_index.computeIfAbsent(wordId, k -> new HashSet<>()).add(Integer.valueOf(documentId));
                         }
                     }
                 }
@@ -52,14 +60,14 @@ public class InvertedIndex {
             JSONObject Inverted_Index=new JSONObject(Inverted_index);
 
             try (FileWriter index_write = new FileWriter("inverted_index.json")) {
-                index_write.write(Inverted_Index.toString()); // Specify an indentation value for better readability
-                System.out.println("Data written to file successfully.");
+                index_write.write(Inverted_Index.toString(4));
+                System.out.println("Data written on index file");
             } catch (IOException e) {
-                System.out.println("Error writing to file: " + e.getMessage());
+                System.out.println("ERROR! " + e.getMessage());
             } 
             }
         } catch (FileNotFoundException e) {
-            System.out.println(e.getMessage()+"Unable to open Forward index file");
+            System.out.println(e.getMessage()+"Unable to access Forward index file");
           }  
     }
 }
