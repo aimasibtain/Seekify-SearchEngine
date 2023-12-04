@@ -10,7 +10,7 @@ from file_retriever import get_json_file_paths
 from file_retriever import load_file
 import check_url
 
-json_files = get_json_file_paths(r'D:\Downloads\test')
+json_files = get_json_file_paths(r'D:\Downloads\test2')
 #checks if file have been successfully retrieved
 print(json_files)
 
@@ -48,10 +48,13 @@ class IndexBuilder(threading.Thread):
                     else:
                         # if the word is found, we retrieve its id
                         word_id = self.words[token]
+                    #if a list doesn't exist for the type we initialize it
+                    if type not in self.forward_index:
+                        self.forward_index[doc_id]["words"][word_id]["positions"][type] = []
                     #updating the forward index
                     self.forward_index[doc_id]["words"][word_id]["frequency"] += 1
                     #count is the position from which the section of the article begins
-                    self.forward_index[doc_id]["words"][word_id]["positions"].append((position+count, type))
+                    self.forward_index[doc_id]["words"][word_id]["positions"][type].append(position+count)
     def run(self):
         #iterating through every file
         for file in self.file_list:
@@ -75,7 +78,7 @@ class IndexBuilder(threading.Thread):
                             self.forward_index[doc_id] = {
                             "title": item["title"],
                             "url": item["url"],
-                            "words": defaultdict(lambda: {"frequency": 0, "positions": []})
+                            "words": defaultdict(lambda: {"frequency": 0, "positions": {}})
                         }
 
                         title = item["title"]
