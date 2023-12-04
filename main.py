@@ -10,7 +10,7 @@ from file_retriever import get_json_file_paths
 from file_retriever import load_file
 import check_url
 
-json_files = get_json_file_paths(r'D:\Downloads\test2')
+json_files = get_json_file_paths(r'D:\Downloads\test')
 #checks if file have been successfully retrieved
 print(json_files)
 
@@ -131,6 +131,7 @@ def build_forward_index(json_files):
 #function for saving data to json files
 def save_to_json(data, filename):
     with open(filename, 'w') as file:
+        #indentation has been added for comprehensibility, it may be removed to substantially reduce memory usage
         json.dump(data, file, indent=4)
 
 # saving all data to json files
