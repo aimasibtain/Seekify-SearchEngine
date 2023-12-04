@@ -10,9 +10,7 @@ from file_retriever import get_json_file_paths
 from file_retriever import load_file
 import check_url
 
-import re
-
-json_files = get_json_file_paths(r'E:\json\test')
+json_files = get_json_file_paths(r'D:\Downloads\test2')
 #checks if file have been successfully retrieved
 print(json_files)
 
@@ -40,24 +38,23 @@ class IndexBuilder(threading.Thread):
         with self.lock:
             #finds the position of each word in the section
             for position, token in enumerate(tokens):
-                
-                #remove unwanted characters
-                clean_token = re.sub(r'[\'@!.(){}[\]/,;:"]', '', token)
                 #filters out stopwords
-                if clean_token.lower() not in stopwords.words('english'):
-                    
+                if token not in stopwords.words('english'):
                     #checks to see if word is in our lexicon
-                    if clean_token not in self.words:
+                    if token not in self.words:
                         #if the word is not present, it is assigned an id and added to the lexicon
                         word_id = len(self.words) + 1
                         self.words[token] = word_id
                     else:
                         # if the word is found, we retrieve its id
                         word_id = self.words[token]
+                    #if a list doesn't exist for the type we initialize it
+                    if type not in self.forward_index:
+                        self.forward_index[doc_id]["words"][word_id]["positions"][type] = []
                     #updating the forward index
                     self.forward_index[doc_id]["words"][word_id]["frequency"] += 1
                     #count is the position from which the section of the article begins
-                    self.forward_index[doc_id]["words"][word_id]["positions"].append((position+count, type))
+                    self.forward_index[doc_id]["words"][word_id]["positions"][type].append(position+count)
     def run(self):
         #iterating through every file
         for file in self.file_list:
@@ -81,7 +78,7 @@ class IndexBuilder(threading.Thread):
                             self.forward_index[doc_id] = {
                             "title": item["title"],
                             "url": item["url"],
-                            "words": defaultdict(lambda: {"frequency": 0, "positions": []})
+                            "words": defaultdict(lambda: {"frequency": 0, "positions": {}})
                         }
 
                         title = item["title"]
