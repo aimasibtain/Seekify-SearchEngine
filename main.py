@@ -10,7 +10,7 @@ from file_retriever import get_json_file_paths
 from file_retriever import load_file
 import check_url
 
-json_files = get_json_file_paths(r'D:\Downloads\test')
+json_files = get_json_file_paths(r'D:\Downloads\test2')
 #checks if file have been successfully retrieved
 print(json_files)
 
@@ -48,8 +48,8 @@ class IndexBuilder(threading.Thread):
                     else:
                         # if the word is found, we retrieve its id
                         word_id = self.words[token]
-                    #if a list doesn't exist for the type we initialize it
-                    if type not in self.forward_index:
+                    # If a list doesn't exist for the type, we initialize it
+                    if type not in self.forward_index[doc_id]["words"][word_id]["positions"]:
                         self.forward_index[doc_id]["words"][word_id]["positions"][type] = []
                     #updating the forward index
                     self.forward_index[doc_id]["words"][word_id]["frequency"] += 1
@@ -83,18 +83,31 @@ class IndexBuilder(threading.Thread):
 
                         title = item["title"]
                         tokens = word_tokenize(title.lower())
-
+                        x = 1
                         #positions start from 1 for every document
-                        self.add(doc_id, tokens, "t", 1)
+                        self.add(doc_id, tokens, "t", x)
 
                     #adding all words in content section to the index
                     if "content" in item:
                         content = item["content"]
 
-                        #the position of the next words in the article after title dtart at a position after title
-                        x = len(tokens) + 1
+                        #the position of the next words in the article after title start at a position after title
+                        x += len(tokens)
                         tokens = word_tokenize(content.lower())
                         self.add(doc_id, tokens, "c", x)
+
+                    if "author" in item:
+                        content = item["author"]
+
+                        x += len(tokens)
+                        tokens = word_tokenize(content.lower())
+                        self.add(doc_id, tokens, "a", x)
+                    if "source" in item:
+                        content = item["source"]
+
+                        x += len(tokens)
+                        tokens = word_tokenize(content.lower())
+                        self.add(doc_id, tokens, "s", x)
 
 
 
@@ -104,9 +117,16 @@ class IndexBuilder(threading.Thread):
                 print(f"{self.name}: Processed {file}. Progress: {self.progress_counter[0]}/{len(json_files)} files.")
 
 
+def get_latest_existing_barrel():
+    barrel_id = 1
+    while os.path.exists(f"forward_index_barrel_{barrel_id}.json"):
+        barrel_id += 1
+    return barrel_id - 1
+
 def build_forward_index(json_files):
     #loads the forward index
-    forward_index = load_file('forward_index.json')
+    barrel = get_latest_existing_barrel()
+    forward_index = load_file(f"forward_index_barrel_{barrel}.json")
     #retrives our lexicon
     words = load_file('lexicon.json')
     #retrieve urls that are already in our system
@@ -128,14 +148,49 @@ def build_forward_index(json_files):
     #returning variables for use outside of function
     return forward_index, words, urls
 
+
 #function for saving data to json files
 def save_to_json(data, filename):
     with open(filename, 'w') as file:
         #indentation has been added for comprehensibility, it may be removed to substantially reduce memory usage
         json.dump(data, file, indent=4)
 
+def divide_into_barrels(forward_index, num_articles_per_barrel):
+    barrels = []
+    current_barrel = {}
+    counter = 0
+
+    for doc_id, doc_data in forward_index.items():
+        current_barrel[doc_id] = doc_data
+        counter += 1
+
+        if counter == num_articles_per_barrel:
+            barrels.append(current_barrel)
+            current_barrel = {}
+            counter = 0
+
+    if current_barrel:
+        barrels.append(current_barrel)
+
+    return barrels
+
+
+def save_barrels(barrels, base_filename):
+    curr = get_latest_existing_barrel()
+    for i, barrel in enumerate(barrels):
+        filename = f"{base_filename}_{i+curr}.json"
+        save_to_json(barrel, filename)
+
+
 # saving all data to json files
 forward_index, words, urls = build_forward_index(json_files)
-save_to_json(forward_index, 'forward_index.json')
+
 save_to_json(words, 'lexicon.json')
 save_to_json(urls, 'urls.json')
+
+# Divide the forward index into barrels of 1000 articles each
+num_articles_per_barrel = 1000
+barrels = divide_into_barrels(forward_index, num_articles_per_barrel)
+
+# Save each barrel
+save_barrels(barrels, 'forward_index_barrel')
