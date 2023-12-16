@@ -64,6 +64,8 @@ class IndexBuilder(threading.Thread):
                 # iterating through every article in a file
                 for item in data:
 
+                    x = 1
+
                     #if we already have processed that article, we skip it and move to the next article
                     if not check_url.process_url(item["url"], self.urls):
                         continue
@@ -83,7 +85,7 @@ class IndexBuilder(threading.Thread):
 
                         title = item["title"]
                         tokens = word_tokenize(title.lower())
-                        x = 1
+                        
                         #positions start from 1 for every document
                         self.add(doc_id, tokens, "t", x)
 
