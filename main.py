@@ -10,7 +10,7 @@ from file_retriever import get_json_file_paths
 from file_retriever import load_file
 import check_url
 
-json_files = get_json_file_paths(r'D:\Downloads\test2')
+json_files = get_json_file_paths(r'D:\Downloads\data')
 #checks if file have been successfully retrieved
 print(json_files)
 
@@ -119,20 +119,25 @@ class IndexBuilder(threading.Thread):
 
 def get_latest_existing_barrel():
     barrel_id = 1
-    while os.path.exists(f"forward_index_barrel_{barrel_id}.json"):
+    while os.path.exists(f"forward_index/forward_index_barrel_{barrel_id}.json"):
         barrel_id += 1
     return barrel_id - 1
 
 def build_forward_index(json_files):
     #loads the forward index
     barrel = get_latest_existing_barrel()
-    forward_index = load_file(f"forward_index_barrel_{barrel}.json")
+    forward_index = load_file(f"forward_index/forward_index_barrel_{barrel}.json")
     #retrives our lexicon
     words = load_file('lexicon.json')
     #retrieve urls that are already in our system
     urls = load_file('urls.json')
     #we declare a global document id with a value one greater than the document id of the last article in the forward index
-    global_doc_id = [len(forward_index) + 1]  # Global counter for unique doc_id
+    if not forward_index:
+        last_doc = 0
+    else:
+        last_doc = list(forward_index.keys())[-1]
+    global_doc_id = [int(last_doc) + 1]  # Global counter for unique
+    print(global_doc_id)
     lock = threading.Lock()
     threads = []
     progress_counter = [0]
@@ -193,4 +198,4 @@ num_articles_per_barrel = 1000
 barrels = divide_into_barrels(forward_index, num_articles_per_barrel)
 
 # Save each barrel
-save_barrels(barrels, 'forward_index_barrel')
+save_barrels(barrels, 'forward_index/forward_index_barrel')
