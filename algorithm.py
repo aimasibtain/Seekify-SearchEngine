@@ -4,6 +4,12 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from file_retriever import load_file
 
+from flask import Flask, request, jsonify
+
+
+app = Flask(__name__)
+
+
 lexicon = load_file("lexicon.json")
 no_of_words_per_barrel = 1000
 
@@ -76,6 +82,16 @@ def search(query):
             word_ids.append(word_id)
     return find(word_ids)
 
+@app.route('/search', methods=['POST'])
+def api_search():
+    content = request.json
+    query = content.get('query', '')
+    if query:
+        results = search(query)
+        return jsonify(results)
+    else:
+        return jsonify({"error": "No query provided"}), 400
+
 
 docs = search("hello for world")
 
@@ -97,3 +113,19 @@ def display(docs, size, offset):
             doc_data.append(barrel[key])
         return doc_data
 
+
+@app.route('/display', methods=['POST'])
+def api_display():
+    content = request.json
+    docs = content.get('docs', {})
+    size = int(content.get('size', 10))
+    offset = int(content.get('offset', 0))
+
+    if docs:
+        doc_data = display(docs, size, offset)
+        return jsonify(doc_data)
+    else:
+        return jsonify({"error": "No documents provided"}), 400
+
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=3001, debug=True)
