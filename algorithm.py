@@ -1,4 +1,3 @@
-import os
 import math
 from collections import defaultdict
 from nltk.tokenize import word_tokenize
@@ -57,11 +56,12 @@ def find(word_ids):
         if word_id in barrel: #re-consider this#
             data = barrel[word_id]
             words.append(data)
-    for word in words:
-        for item in word:
-            docs[item.key][word.key] = word
-    for doc in docs:
-        rank[doc.key] = calculate_rank(doc, word_ids)
+    for word_key, word in words:
+        for item_key, item in word:
+            docs[item_key][word_key] = word
+    for doc_key, doc in docs:
+        rank[doc_key] = calculate_rank(doc, word_ids)
+    return rank
 
 
 
@@ -74,6 +74,26 @@ def search(query):
         if token not in stopwords.words('english'):
             word_id = lexicon[token]
             word_ids.append(word_id)
-    find(word_ids)
+    return find(word_ids)
 
-search("hello for world")
+
+docs = search("hello for world")
+
+sorted_items = sorted(docs.items(), key=lambda item: item[1])
+
+def display(docs, size, offset):
+        doc_data = []
+        start_index = offset * size
+        end_index = start_index + size
+
+        # Extract the desired range of documents
+        selected_keys = list(docs.keys())[start_index:end_index]
+
+        for key in selected_keys:
+            barrel_id = -1
+            if barrel_id != key // 1000:
+                barrel_id = key // 1000
+                barrel = load_file(f"metadata/metadata_barrel_{barrel_id}.json")
+            doc_data.append(barrel[key])
+        return doc_data
+
