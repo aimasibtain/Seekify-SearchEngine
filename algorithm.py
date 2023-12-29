@@ -5,11 +5,19 @@ from nltk.corpus import stopwords
 from file_retriever import load_file
 
 lexicon = load_file("lexicon.json")
-no_of_words_per_barrel = 20000
+
 
 def printlist(list):
     for item in list:
         print(item)
+
+def dynamic_num_words_func(counter):
+    if counter <= 20000:
+        return 100
+    elif counter <= 100000:
+        return 10000
+    else:
+        return 20000
 
 def proximity_rank(doc, word_ids):
     val = 0
@@ -65,10 +73,11 @@ def find(word_ids):
     sorted_word_ids = sorted(word_ids)
     print(sorted_word_ids)
     for word_id in sorted_word_ids:
+        no_of_words_per_barrel = dynamic_num_words_func(word_id)
         if barrel_id != word_id // no_of_words_per_barrel:
             barrel_id = word_id // no_of_words_per_barrel
             barrel = load_file(f"inverted_index/inverted_index_barrel_{barrel_id}.json")
-        if str(word_id) in barrel: #re-consider this#
+        if str(word_id) in barrel:
             data = barrel[str(word_id)]
             words[word_id] = data
 
@@ -98,7 +107,7 @@ def search(query):
 
 docs = search("Richest Man")
 sorted_items = sorted(docs.items(), key=lambda item: item[1], reverse=True)
-print(sorted_items)
+print(f"{len(sorted_items)} articles retrieved")
 
 def display(docs, size, offset):
     doc_data = []
@@ -110,8 +119,8 @@ def display(docs, size, offset):
 
     for doc_id, rank in selected_items:
         barrel_id = -1
-        if barrel_id != int(doc_id) // no_of_words_per_barrel:
-            barrel_id = int(doc_id) // no_of_words_per_barrel
+        if barrel_id != int(doc_id) // 1000:
+            barrel_id = int(doc_id) // 1000
             barrel = load_file(f"metadata/metadata_barrel_{barrel_id}.json")
         doc_data.append(barrel[doc_id])
 
