@@ -29,7 +29,7 @@ def build_index():
     while True:
         filename = f"forward_index/forward_index_barrel_{barrel_id}.json"
 
-        if os.path.exists(filename) and barrel_id < 1:
+        if os.path.exists(filename):
             forward_index = load_file(filename)
             print(f"Processed {filename}. Progress: {barrel_id} files.")
 
@@ -46,18 +46,24 @@ def build_index():
         else:
             return inverted_index
 
+def dynamic_num_words_func(counter):
+    if counter <= 20000:
+        return 100
+    elif counter <= 100000:
+        return 10000
+    else:
+        return 20000
 
-
-def divide_into_barrels(words , num_words_per_barrel):
+def divide_into_barrels(words):
     barrels = []
     current_barrel = {}
     counter = 0
-
+    words_counter = 0
     for doc_id, doc_data in words.items():
         current_barrel[doc_id] = doc_data
         counter += 1
-
-        if counter == num_words_per_barrel:
+        words_counter +=1
+        if counter == dynamic_num_words_func(words_counter):
             barrels.append(current_barrel)
             current_barrel = {}
             counter = 0
@@ -69,7 +75,7 @@ def divide_into_barrels(words , num_words_per_barrel):
 
 def save_to_json(data, filename):
     with open(filename, 'w') as file:
-        json.dump(data, file, indent=4)
+        json.dump(data, file)
 
 def save_barrels(barrels, base_filename):
     for i, barrel in enumerate(barrels):
@@ -79,8 +85,7 @@ def save_barrels(barrels, base_filename):
 
 
 inverted_index = build_index()
-# Divide the inverted index into barrels of 20000 words each
-num_words_per_barrel = 20000
+
 sorted_inverted_index = dict(sorted(inverted_index.items(), key=lambda item: int(item[0])))
-barrels = divide_into_barrels(sorted_inverted_index, num_words_per_barrel)
+barrels = divide_into_barrels(sorted_inverted_index)
 save_barrels(barrels, 'inverted_index/inverted_index_barrel')
